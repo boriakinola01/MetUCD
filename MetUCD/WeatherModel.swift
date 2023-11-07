@@ -10,29 +10,30 @@ import Foundation
 struct WeatherModel: Codable {
     
     // All fields gotten from the OpenWeather API
+    // https://api.openweathermap.org/data/2.5/weather
     
     struct Wind: Codable {
-        // current.wind_speed
+        // wind.speed
         var speed: Double
-        // current.wind_deg
+        // wind.deg
         var direction: Int
     }
     
-    // current.temp
+    // main.temp
     var temp: Double
     
-    // current.feels_like
+    // main.feels_like
     var feelsLike: Double
     
-    // current.clouds
+    // clouds.all
     var cloudCoverage: Double
     
     // Wind information
     var wind: Wind
     
-    // currrent.pressure
+    // main.pressure
     var pressure: Double
     
-    // current.humidity
+    // main.humidity
     var humidity: Double
 }
