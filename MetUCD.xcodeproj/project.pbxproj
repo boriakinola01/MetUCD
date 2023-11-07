@@ -14,6 +14,7 @@
 		91AC2EAF2AF9508D00C5A36E /* WeatherModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EAE2AF9508D00C5A36E /* WeatherModel.swift */; };
 		91AC2EB12AF950AD00C5A36E /* PollutionModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EB02AF950AD00C5A36E /* PollutionModel.swift */; };
 		91AC2EB32AF950CA00C5A36E /* ForecastModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EB22AF950CA00C5A36E /* ForecastModel.swift */; };
+		91AC2EB52AFA509000C5A36E /* GeocodeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EB42AFA509000C5A36E /* GeocodeModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +26,7 @@
 		91AC2EAE2AF9508D00C5A36E /* WeatherModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModel.swift; sourceTree = "<group>"; };
 		91AC2EB02AF950AD00C5A36E /* PollutionModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PollutionModel.swift; sourceTree = "<group>"; };
 		91AC2EB22AF950CA00C5A36E /* ForecastModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForecastModel.swift; sourceTree = "<group>"; };
+		91AC2EB42AFA509000C5A36E /* GeocodeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeocodeModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,7 @@
 				91AC2EAE2AF9508D00C5A36E /* WeatherModel.swift */,
 				91AC2EB02AF950AD00C5A36E /* PollutionModel.swift */,
 				91AC2EB22AF950CA00C5A36E /* ForecastModel.swift */,
+				91AC2EB42AFA509000C5A36E /* GeocodeModel.swift */,
 			);
 			path = MetUCD;
 			sourceTree = "<group>";
@@ -146,6 +149,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91AC2EB52AFA509000C5A36E /* GeocodeModel.swift in Sources */,
 				91AC2EA32AF9500100C5A36E /* ContentView.swift in Sources */,
 				91AC2EAF2AF9508D00C5A36E /* WeatherModel.swift in Sources */,
 				91AC2EB12AF950AD00C5A36E /* PollutionModel.swift in Sources */,
