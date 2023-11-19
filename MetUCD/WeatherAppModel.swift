@@ -6,69 +6,144 @@
 //
 
 import Foundation
+import UIKit
 
-struct WeatherAppModel: Codable {
+struct WeatherAppModel {
     
+    private(set) var location: Location?
+    private(set) var geocodeData: GeocodeData?
+    private(set) var weatherData: WeatherData?
+    private(set) var pollution: PollutionData?
+    private(set) var weatherForecastData: WeatherForecastData?
     
+    static private let apiKey: String = "a217d4b7c0bd4440dd30d808358561fb"
+    static private let base: String = "https://api.openweathermap.org"
     
+    mutating func fetch(for locationName: String) async {
+        self.geocodeData = await Self.getGeocodeData(locationName: locationName)
+        self.location = self.geocodeData![0]
+        print(self.geocodeData ?? "empty") // tested OK with "Dublin:
+    }
     
-    // Mark:-
-    
-    struct GeocodeModel : Codable {
+    // MARK: - Fetch function
+    static func fetch<T: Codable>(
+            subURLString: String,
+            model: T.Type
+    ) async throws -> T
+    {
+        let urlString: String = base + subURLString + "&appid=" + apiKey
         
-        struct Location: Codable {
-            var name: String
-            var localNames: [String: String]?
-            var lat: Double
-            var lon: Double
-            var country: String
-            var state: String?
+        guard let url = URL(string: urlString) else {
+            throw NSError(domain: "Bad URL", code: 0, userInfo: nil)
         }
         
-        let locations: [Location]
+        let (data, _) =  try await URLSession.shared.data(from: url)
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode(T.self, from: data)
+
+    }
+    
+    static func getGeocodeData(locationName: String) async -> GeocodeData? {
+        let subString: String = "/geo/1.0/direct?q=\(locationName)&limit=1"
+        return try? await Self.fetch(subURLString: subString, model: GeocodeData.self)
+    }
+    
+//    mutating func decodeWeather(decodedWeather: WeatherData) {
+//        self.weatherData = WeatherData(main: decodedWeather.main, wind: decodedWeather.wind, clouds: decodedWeather.clouds)
+//    }
+//    
+//    mutating func decodeGeo(decodedGeo: GeocodeData) {
+//        self.geocodeData = decodedGeo
+//    }
+//    
+//    mutating func decodePollution(decodedData: PollutionData) {
+//        self.pollution = decodedData
+//    }
+//    
+//    mutating func decodeWeatherForecast(decodedData: WeatherForecastData) {
+//        self.weatherForecastData = decodedData
+//    }
+    
+    mutating func getWeatherData() async {
+        let subString: String = "/data/2.5/weather?lat=\(location!.lat)&lon=\(location!.lon)"
+        self.weatherData = try? await Self.fetch(subURLString: subString, model: WeatherData.self)
+    }
+    
+    mutating func getPollutionData() async {
+        let subString: String = "/data/2.5/air_pollution?lat=\(location!.lat)&lon=\(location!.lon)"
+        self.pollution = try? await Self.fetch(subURLString: subString, model: PollutionData.self)
+    }
+    
+    mutating func getWeatherForecastData() async {
+        let subString: String = "/data/2.5/weather?lat=\(location!.lat)&lon=\(location!.lon)"
+        self.weatherForecastData = try? await Self.fetch(subURLString: subString, model: WeatherForecastData.self)
+    }
+    
+    typealias GeocodeData = [Location]
+    
+    struct Location: Codable {
+        var name: String
+        var localNames: [String: String]?
+        var lat: Double
+        var lon: Double
+        var country: String
+        var state: String?
+    }
+    
+    struct WindInfo: Codable {
+        // wind.speed
+        var speed: Double
+        // wind.deg
+        var deg: Int
+    }
+    
+    struct MainInfo: Codable {
+        // main.temp
+        var temp: Double
+        // main.feels_like
+        var feels_like: Double
+        // main.pressure
+        var pressure: Double
+        // main.humidity
+        var humidity: Double
+    }
+    
+    struct CloudInfo: Codable {
+        // cloud.all
+        var all: Int
+    }
+    
+    // MARK: - Weather data
+    struct WeatherData: Codable {
+        let main: MainInfo
+        let wind: WindInfo
+        let clouds: CloudInfo
+    }
+    
+    // MARK: - Pollution data
+    struct PollutionData: Codable {
         
-        static func fetchLocations(completion: @escaping (Result<[Location], Error>) -> Void) {
-            
-            guard let url = URL(string: "https://api.openweathermap.org/geo/1.0/direct?q=Dublin,IE&limit=5&appid=a217d4b7c0bd4440dd30d808358561fb") else {
-                completion(.failure(NSError(domain: "Invalid URL", code: 0, userInfo: nil)))
-                return
-            }
-            
-            let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-                if let error = error {
-                    completion(.failure(error))
-                    return
-                }
-                
-                if let httpResponse = response as? HTTPURLResponse {
-                    print("HTTP Status Code: \(httpResponse.statusCode)")
-                    if !(200..<300).contains(httpResponse.statusCode) {
-                        completion(.failure(NSError(domain: "HTTP Error", code: httpResponse.statusCode, userInfo: nil)))
-                        return
-                    }
-                }
-                
-                guard let data = data else {
-                    completion(.failure(NSError(domain: "No data received", code: 0, userInfo: nil)))
-                    return
-                }
-                
-                // Print the raw data received
-                print("Raw Data: \(String(data: data, encoding: .utf8) ?? "No data")")
-                
-                do {
-                    let decoder = JSONDecoder()
-                    decoder.keyDecodingStrategy = .convertFromSnakeCase
-                    let decodedData = try decoder.decode([Location].self, from: data)
-                    print("Data decode correctly")
-                    completion(.success(decodedData))
-                } catch {
-                    print("Data couldn't be decoded")
-                    completion(.failure(error))
-                }
-            }
-            
-            task.resume()
-        }
+        // list[0].components.co
+        var co: Double
+        // list[0].components.no
+        var no: Double
+        // list[0].components.no2
+        var no2: Double
+        // list[0].components.o3
+        var o3: Double
+        // list[0].components.pm10
+        var pm10: Double
+        // list[0].components.pm2_5
+        var pm2_5: Double
+        // list[0].components.so2
+        var so2: Double
+        // list[0].components.nh3
+        var nh3: Double
+    }
+    
+    // MARK: - Weather forecast data
+    struct WeatherForecastData: Codable {
+        
     }
 }
