@@ -19,25 +19,29 @@ struct WeatherView: View {
                     TextField("Enter location e.g Dublin, IE ", text: $viewModel.location)
                         .onSubmit {
                             viewModel.fetchData()
-                        }
+                        }.disableAutocorrection(true)
                 }
                 
                 if let data = viewModel.geoInfo {
-                    geoSection(model: data)
+                    GeoSection(model: data)
                 }
                 
                 if let data = viewModel.weatherInfo {
-                    weatherSection(model: data)
+                    WeatherSection(model: data)
                 }
                 
                 if let data = viewModel.pollutionInfo {
                     PollutionSection(model: data)
                 }
+                
+                if let data = viewModel.weatherForecastListInfo {
+                    WeatherForecastSection(model: data)
+                }
             }
         }
     }
     
-    struct geoSection : View {
+    struct GeoSection : View {
         var model: WeatherViewModel.GeoInfo
         var body: some View {
             Section(header: Text("GEO INFO")) {
@@ -73,7 +77,7 @@ struct WeatherView: View {
         }
     }
     
-    struct weatherSection : View {
+    struct WeatherSection : View {
         var model: WeatherViewModel.WeatherInfo
         var body: some View {
             
@@ -95,13 +99,10 @@ struct WeatherView: View {
                         icon: { Image(systemName: "thermometer.variable.and.figure") }
                     )
                 }
-                
-                
                 Label(
                     title: { Text("\(model.cloudCoverage)") },
                     icon: { Image(systemName: "cloud") }
                 )
-                
                 Label(
                     title: { Text("\(model.windSpeedDirection)") },
                     icon: { Image(systemName: "wind") }
@@ -116,7 +117,6 @@ struct WeatherView: View {
                         icon: { Image(systemName: "gauge.with.dots.needle.bottom.50percent") }
                     )
                 }
-               
             }
         }
     }
@@ -137,20 +137,28 @@ struct WeatherView: View {
                                 }
                             }
                         }
-                        
                     }
-                   
                 }
             }
         }
     }
     
-    struct ForecastSection : View {
-        
+    struct WeatherForecastSection : View {
+        var model = WeatherViewModel.WeatherForecastList()
         var body: some View {
-            
             Section(header: Text("5 day forecast")) {
-                
+                ForEach(model, id: \.self) { forecast in
+                    HStack {
+                        Text("\(forecast.dayOfWeek)")
+                            .tint(.blue)
+                            .frame(width: 50)
+                        Spacer().frame(width: 120)
+                        HStack {
+                            Image(systemName: "thermometer.medium").opacity(0.5)
+                            Text("\(forecast.tempLowHigh)").opacity(0.5)
+                        }
+                    }
+                }
             }
         }
     }

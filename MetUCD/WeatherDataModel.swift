@@ -31,25 +31,19 @@ struct WeatherDataModel {
         self.geocodeData = await OpenWeatherMapAPI.getGeocodeData(locationName: locationName)
         self.location = geocodeData?[0]
         
-        print("printing geoCodeData data")
-        print(self.geocodeData ?? "empty geocodeData")
-        
-        print("printing location data")
-        print(self.location ?? "empty location")
-        
         if let location = location {
             let lon = location.lon
             let lat = location.lat
             
             // WeatherData Working
             self.weatherData = await OpenWeatherMapAPI.getWeatherData(lat: lat,lon: lon)
-            
-            
+            // PollutionData working
             self.pollution = await OpenWeatherMapAPI.getPollutionData(lat: lat,lon: lon)
-            print(self.pollution ?? "Pollution not working")
-            
-            self.weatherForecastData = await OpenWeatherMapAPI.getWeatherForecastData(lat: lat,lon: lon)
+            // PollutionDataForecast working
             self.pollutionForecastData = await OpenWeatherMapAPI.getPollutionForecastData(lat: lat,lon: lon)
+
+            self.weatherForecastData = await OpenWeatherMapAPI.getWeatherForecastData(lat: lat,lon: lon)
+            
         }
         
     }
@@ -63,6 +57,7 @@ struct OpenWeatherMapAPI {
     static func fetch<T: Codable>(
             subURLString: String,
             model: T.Type,
+            // This helps differentiates using the decoding strategy in the JSONDecoder()
             val: Int = 1
     ) async throws -> T
     {
@@ -76,7 +71,14 @@ struct OpenWeatherMapAPI {
         let decoder = JSONDecoder()
         if (val == 1) {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
+        } else {
+            decoder.keyDecodingStrategy = .useDefaultKeys
         }
+        
+        if (model == WeatherForecastData.self) {
+            print(String(data: data, encoding: .utf8)!)
+        }
+        
         return try decoder.decode(T.self, from: data)
     }
     
@@ -102,7 +104,7 @@ struct OpenWeatherMapAPI {
     
     static func getPollutionForecastData(lat: Double, lon: Double) async -> PollutionForecastData? {
         let subString: String = "/data/2.5/air_pollution/forecast?lat=\(lat)&lon=\(lon)"
-        return try? await Self.fetch(subURLString: subString, model: PollutionForecastData.self)
+        return try? await Self.fetch(subURLString: subString, model: PollutionForecastData.self, val: 0)
     }
 }
    
@@ -158,12 +160,18 @@ struct WeatherSys: Codable {
     
 // MARK: - Weather data
 struct WeatherData: Codable {
+    let dt: Int
     let main: WeatherMain
     let wind: WeatherWind
     let clouds: WeatherClouds
     let sys: WeatherSys
     let weather: [WeatherWeather]
-    let timezone: Int
+    let timezone: Int?
+}
+
+struct ForecastWeatherData: Codable {
+    let dt: Int
+    let main: WeatherMain
 }
 
 // MARK: - Pollution data
@@ -201,14 +209,8 @@ struct PollutionComponents: Codable {
 
 // MARK: - Weather forecast data
 struct WeatherForecastData: Codable {
-    var list: [WeatherData]
+    var list: [ForecastWeatherData]
 }
 
 // MARK: - Pollution forecast data
-struct PollutionForecastData: Codable {
-    var list: [PollutionData]
-}
-
-
-
-
+typealias PollutionForecastData = PollutionData

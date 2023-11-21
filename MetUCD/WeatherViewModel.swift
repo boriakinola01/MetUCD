@@ -32,6 +32,10 @@ import Foundation
         getPollutionInfo()
     }
     
+    var weatherForecastListInfo: WeatherForecastList? {
+        getWeatherForecastListInfo()
+    }
+    
     struct GeoInfo {
         var coordinates: String
         var sunrise: String
@@ -55,6 +59,13 @@ import Foundation
         var quality: String
     }
     
+    struct WeatherForecastInfo: Hashable {
+        var dayOfWeek: String
+        var tempLowHigh: String
+    }
+    
+    typealias WeatherForecastList = [WeatherForecastInfo]
+    
     private func getGeoInfo() -> GeoInfo? {
         // Get the coordinates in Degrees Minutes and Seconds format
         if let geoCode = dataModel.geocodeData {
@@ -63,7 +74,7 @@ import Foundation
             
             let sunrise: String = convertUnixTimestampToDate(timestamp: (dataModel.weatherData?.sys.sunrise)!)
             let sunset : String = convertUnixTimestampToDate(timestamp: (dataModel.weatherData?.sys.sunset)!)
-            let timeDiff: String = formatTimezoneOffset(seconds: dataModel.weatherData!.timezone)
+            let timeDiff: String = formatTimezoneOffset(seconds: dataModel.weatherData!.timezone!)
             
             return GeoInfo(coordinates: coords, 
                            sunrise: sunrise,
@@ -79,7 +90,7 @@ import Foundation
         
         if let weather = dataModel.weatherData {
             
-            return WeatherInfo(temperature: "\(Int(weather.main.temp))",
+            return WeatherInfo(temperature: "\(Int(weather.main.temp))º",
                                tempLowHigh: "(L:\(Int(weather.main.tempMin))ºH:\(Int(weather.main.tempMax)))",
                                tempFeels: "Feels \(Int(weather.main.feelsLike))º",
                                cloudCoverage: "\(Int(weather.main.temp))% coverage",
@@ -106,6 +117,7 @@ import Foundation
                 "NO2": components.no2
             ]
             
+            // Get the air quality from the index
             let pollutionIndex: [Int: String] = [
                 1: "Good",
                 2: "Fair",
@@ -115,12 +127,40 @@ import Foundation
             ]
             
             return PollutionInfo(items: items, quality: pollutionIndex[mainIndex]!)
-            
         }
-        
-        
         return nil
     }
+    
+    func getWeatherForecastListInfo() -> WeatherForecastList? {
+        var forecastList: WeatherForecastList? = nil
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "E"
+        
+        var uniqueDTs: Set<String> = Set()
+        
+        if let forecastData = dataModel.weatherForecastData {
+           
+            forecastList = []
+            
+            for weatherData in forecastData.list {
+                let date = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
+                
+                if uniqueDTs.count < 5 && !uniqueDTs.contains(date) {
+                    forecastList?.append(WeatherForecastInfo(dayOfWeek: uniqueDTs.count == 0 ? "Today" : date,
+                                                            tempLowHigh: "(L: \(Int(weatherData.main.tempMin))º H: \(Int(weatherData.main.tempMax))º)"))
+                    uniqueDTs.insert(date)
+                }
+                
+                if uniqueDTs.count >= 5 {
+                    break;
+                }
+            }
+        }
+        
+        return forecastList
+    }
+    
 }
 
 // MARK: - Misc
