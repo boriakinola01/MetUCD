@@ -182,9 +182,9 @@ struct WeatherView: View {
 //                .chartYAxis(
 //                    AxisMarks(position: .leading)
 //                )
-//                .chartYScale(
-//                    domain: ["Very Poor", "Poor", "Moderate", "Fair", "Good"]
-//                )
+                .chartYScale(
+                    domain: ["Very Poor", "Poor", "Moderate", "Fair", "Good"]
+                )
                 
             }
         }
