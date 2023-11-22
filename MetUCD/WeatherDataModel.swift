@@ -35,13 +35,9 @@ struct WeatherDataModel {
             let lon = location.lon
             let lat = location.lat
             
-            // WeatherData Working
             self.weatherData = await OpenWeatherMapAPI.getWeatherData(lat: lat,lon: lon)
-            // PollutionData working
             self.pollution = await OpenWeatherMapAPI.getPollutionData(lat: lat,lon: lon)
-            // PollutionDataForecast working
             self.pollutionForecastData = await OpenWeatherMapAPI.getPollutionForecastData(lat: lat,lon: lon)
-
             self.weatherForecastData = await OpenWeatherMapAPI.getWeatherForecastData(lat: lat,lon: lon)
             
         }
@@ -73,10 +69,6 @@ struct OpenWeatherMapAPI {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
         } else {
             decoder.keyDecodingStrategy = .useDefaultKeys
-        }
-        
-        if (model == WeatherForecastData.self) {
-            print(String(data: data, encoding: .utf8)!)
         }
         
         return try decoder.decode(T.self, from: data)
@@ -186,6 +178,7 @@ struct PollutionListMain: Codable {
 struct PollutionListItem: Codable {
     var components: PollutionComponents
     var main: PollutionListMain
+    var dt: Int
 }
 
 struct PollutionComponents: Codable {

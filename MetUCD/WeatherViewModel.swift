@@ -12,7 +12,13 @@ import Foundation
     
     // MARK: data model
     private var dataModel = WeatherDataModel()
-    
+    let pollutionIndex: [Int: String] = [
+        1: "Good",
+        2: "Fair",
+        3: "Moderate",
+        4: "Poor",
+        5: "Very Poor"
+    ]
     
     func fetchData() {
         Task {
@@ -34,6 +40,10 @@ import Foundation
     
     var weatherForecastListInfo: WeatherForecastList? {
         getWeatherForecastListInfo()
+    }
+    
+    var pollutionForecastListInfo: PollutionForecastList? {
+        getPollutionForecastList()
     }
     
     struct GeoInfo {
@@ -64,7 +74,15 @@ import Foundation
         var tempLowHigh: String
     }
     
+    struct PollutionForecastInfo: Identifiable {
+        var id = UUID()
+        var day: String
+        var index: String
+    }
+    
     typealias WeatherForecastList = [WeatherForecastInfo]
+    
+    typealias PollutionForecastList = [PollutionForecastInfo]
     
     private func getGeoInfo() -> GeoInfo? {
         // Get the coordinates in Degrees Minutes and Seconds format
@@ -117,15 +135,6 @@ import Foundation
                 "NO2": components.no2
             ]
             
-            // Get the air quality from the index
-            let pollutionIndex: [Int: String] = [
-                1: "Good",
-                2: "Fair",
-                3: "Moderate",
-                4: "Poor",
-                5: "Very Poor"
-            ]
-            
             return PollutionInfo(items: items, quality: pollutionIndex[mainIndex]!)
         }
         return nil
@@ -146,9 +155,35 @@ import Foundation
             for weatherData in forecastData.list {
                 let date = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
                 
-                if uniqueDTs.count < 5 && !uniqueDTs.contains(date) {
+                if uniqueDTs.count < 6 && !uniqueDTs.contains(date) {
                     forecastList?.append(WeatherForecastInfo(dayOfWeek: uniqueDTs.count == 0 ? "Today" : date,
                                                             tempLowHigh: "(L: \(Int(weatherData.main.tempMin))º H: \(Int(weatherData.main.tempMax))º)"))
+                    uniqueDTs.insert(date)
+                }
+                
+                if uniqueDTs.count >= 6 {
+                    break;
+                }
+            }
+        }
+        
+        return forecastList
+    }
+    
+    func getPollutionForecastList() -> PollutionForecastList? {
+        var forecastList: PollutionForecastList? = nil
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "E"
+        
+        var uniqueDTs: Set<String> = Set()
+        
+        if let forecastData = dataModel.pollutionForecastData {
+            forecastList = []
+            
+            for pollutionData in forecastData.list {
+                let date = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(pollutionData.dt)))
+                if uniqueDTs.count < 5 && !uniqueDTs.contains(date) {
+                    forecastList?.append(PollutionForecastInfo(day: date, index: pollutionIndex[pollutionData.main.aqi]!))
                     uniqueDTs.insert(date)
                 }
                 

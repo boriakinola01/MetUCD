@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import Charts
 
 struct WeatherView: View {
     
@@ -36,6 +37,10 @@ struct WeatherView: View {
                 
                 if let data = viewModel.weatherForecastListInfo {
                     WeatherForecastSection(model: data)
+                }
+                
+                if let data = viewModel.pollutionForecastListInfo {
+                    PollutionForecastSection(model: data)
                 }
             }
         }
@@ -159,6 +164,28 @@ struct WeatherView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+    
+    struct PollutionForecastSection : View {
+        var model = WeatherViewModel.PollutionForecastList()
+        var body: some View {
+            Section(header: Text("AIR POLLUTION INDEX FORECAST")) {
+                Chart {
+                    ForEach(model) { forecast in
+                        LineMark(x: .value("Day", forecast.day), y: .value("Index", forecast.index))
+                            .interpolationMethod(.stepStart)
+                    }
+                }
+                .frame(height: 200)
+//                .chartYAxis(
+//                    AxisMarks(position: .leading)
+//                )
+//                .chartYScale(
+//                    domain: ["Very Poor", "Poor", "Moderate", "Fair", "Good"]
+//                )
+                
             }
         }
     }
