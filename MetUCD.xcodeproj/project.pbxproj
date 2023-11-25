@@ -7,8 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		91A923282B116BE700A3BCF4 /* SDWebImage in Frameworks */ = {isa = PBXBuildFile; productRef = 91A923272B116BE700A3BCF4 /* SDWebImage */; };
+		91A9232A2B116BE700A3BCF4 /* SDWebImageMapKit in Frameworks */ = {isa = PBXBuildFile; productRef = 91A923292B116BE700A3BCF4 /* SDWebImageMapKit */; };
+		91A9232D2B116CAC00A3BCF4 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 91A9232C2B116CAC00A3BCF4 /* SDWebImageSwiftUI */; };
 		91AC2EA12AF9500100C5A36E /* MetUCDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EA02AF9500100C5A36E /* MetUCDApp.swift */; };
-		91AC2EA32AF9500100C5A36E /* WeatherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EA22AF9500100C5A36E /* WeatherView.swift */; };
+		91AC2EA32AF9500100C5A36E /* WeatherAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91AC2EA22AF9500100C5A36E /* WeatherAppView.swift */; };
 		91AC2EA52AF9500600C5A36E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91AC2EA42AF9500600C5A36E /* Assets.xcassets */; };
 		91AC2EA82AF9500600C5A36E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91AC2EA72AF9500600C5A36E /* Preview Assets.xcassets */; };
 		91CC23202B04EF27007B500C /* WeatherDataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91CC231F2B04EF27007B500C /* WeatherDataModel.swift */; };
@@ -18,7 +21,7 @@
 /* Begin PBXFileReference section */
 		91AC2E9D2AF9500100C5A36E /* MetUCD.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetUCD.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		91AC2EA02AF9500100C5A36E /* MetUCDApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetUCDApp.swift; sourceTree = "<group>"; };
-		91AC2EA22AF9500100C5A36E /* WeatherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherView.swift; sourceTree = "<group>"; };
+		91AC2EA22AF9500100C5A36E /* WeatherAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAppView.swift; sourceTree = "<group>"; };
 		91AC2EA42AF9500600C5A36E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		91AC2EA72AF9500600C5A36E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		91CC231F2B04EF27007B500C /* WeatherDataModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherDataModel.swift; sourceTree = "<group>"; };
@@ -30,6 +33,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				91A9232D2B116CAC00A3BCF4 /* SDWebImageSwiftUI in Frameworks */,
+				91A9232A2B116BE700A3BCF4 /* SDWebImageMapKit in Frameworks */,
+				91A923282B116BE700A3BCF4 /* SDWebImage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,7 +63,7 @@
 			children = (
 				91AC2EA02AF9500100C5A36E /* MetUCDApp.swift */,
 				91DA9C0E2B0B902000B5AC0B /* WeatherViewModel.swift */,
-				91AC2EA22AF9500100C5A36E /* WeatherView.swift */,
+				91AC2EA22AF9500100C5A36E /* WeatherAppView.swift */,
 				91CC231F2B04EF27007B500C /* WeatherDataModel.swift */,
 				91AC2EA42AF9500600C5A36E /* Assets.xcassets */,
 				91AC2EA62AF9500600C5A36E /* Preview Content */,
@@ -89,6 +95,11 @@
 			dependencies = (
 			);
 			name = MetUCD;
+			packageProductDependencies = (
+				91A923272B116BE700A3BCF4 /* SDWebImage */,
+				91A923292B116BE700A3BCF4 /* SDWebImageMapKit */,
+				91A9232C2B116CAC00A3BCF4 /* SDWebImageSwiftUI */,
+			);
 			productName = MetUCD;
 			productReference = 91AC2E9D2AF9500100C5A36E /* MetUCD.app */;
 			productType = "com.apple.product-type.application";
@@ -117,6 +128,10 @@
 				Base,
 			);
 			mainGroup = 91AC2E942AF9500000C5A36E;
+			packageReferences = (
+				91A923262B116BE600A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImage" */,
+				91A9232B2B116CAC00A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+			);
 			productRefGroup = 91AC2E9E2AF9500100C5A36E /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -143,7 +158,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				91AC2EA32AF9500100C5A36E /* WeatherView.swift in Sources */,
+				91AC2EA32AF9500100C5A36E /* WeatherAppView.swift in Sources */,
 				91DA9C0F2B0B902000B5AC0B /* WeatherViewModel.swift in Sources */,
 				91CC23202B04EF27007B500C /* WeatherDataModel.swift in Sources */,
 				91AC2EA12AF9500100C5A36E /* MetUCDApp.swift in Sources */,
@@ -283,6 +298,7 @@
 				DEVELOPMENT_TEAM = 5M85C8QX87;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show weather";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -312,6 +328,7 @@
 				DEVELOPMENT_TEAM = 5M85C8QX87;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show weather";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -352,6 +369,43 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		91A923262B116BE600A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImage" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImage";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.18.5;
+			};
+		};
+		91A9232B2B116CAC00A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		91A923272B116BE700A3BCF4 /* SDWebImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 91A923262B116BE600A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImage;
+		};
+		91A923292B116BE700A3BCF4 /* SDWebImageMapKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 91A923262B116BE600A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImage" */;
+			productName = SDWebImageMapKit;
+		};
+		91A9232C2B116CAC00A3BCF4 /* SDWebImageSwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 91A9232B2B116CAC00A3BCF4 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
+			productName = SDWebImageSwiftUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 91AC2E952AF9500000C5A36E /* Project object */;
 }

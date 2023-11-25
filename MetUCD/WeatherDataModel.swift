@@ -26,10 +26,15 @@ struct WeatherDataModel {
         location = nil
     }
     
-    mutating func fetch(for locationName: String) async {
+    mutating func fetch(for locationName: String) async throws {
         clear()
         self.geocodeData = await OpenWeatherMapAPI.getGeocodeData(locationName: locationName)
+        if self.geocodeData?[0]==nil {
+            throw WeatherError.noGeoData
+        }
         self.location = geocodeData?[0]
+        
+        
         
         if let location = location {
             let lon = location.lon
@@ -39,9 +44,7 @@ struct WeatherDataModel {
             self.pollution = await OpenWeatherMapAPI.getPollutionData(lat: lat,lon: lon)
             self.pollutionForecastData = await OpenWeatherMapAPI.getPollutionForecastData(lat: lat,lon: lon)
             self.weatherForecastData = await OpenWeatherMapAPI.getWeatherForecastData(lat: lat,lon: lon)
-            
         }
-        
     }
 }
     
@@ -164,6 +167,7 @@ struct WeatherData: Codable {
 struct ForecastWeatherData: Codable {
     let dt: Int
     let main: WeatherMain
+    let weather: [WeatherWeather]
 }
 
 // MARK: - Pollution data
@@ -207,3 +211,7 @@ struct WeatherForecastData: Codable {
 
 // MARK: - Pollution forecast data
 typealias PollutionForecastData = PollutionData
+
+enum WeatherError: Error {
+    case noGeoData
+}

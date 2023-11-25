@@ -20,9 +20,14 @@ import Foundation
         5: "Very Poor"
     ]
     
-    func fetchData() {
+    func fetchData() throws {
         Task {
-            await dataModel.fetch(for: location)
+            do {
+                try await dataModel.fetch(for: location)
+            } catch {
+                throw WeatherError.noGeoData
+            }
+            
         }
     }
     
@@ -72,6 +77,7 @@ import Foundation
     struct WeatherForecastInfo: Hashable {
         var dayOfWeek: String
         var tempLowHigh: String
+        var hourIconUrls: [HourIconUrl]
     }
     
     struct PollutionForecastInfo: Identifiable {
@@ -84,9 +90,21 @@ import Foundation
     
     typealias PollutionForecastList = [PollutionForecastInfo]
     
+    struct HourIconUrl: Hashable {
+        var hour: String
+        var url : URL
+    }
+    
+//    struct MapInfo {
+//        var longitude: Double
+//        var latitude: Double
+//        var location: CLLocationCoordinate2D
+//    }
+    
     private func getGeoInfo() -> GeoInfo? {
         // Get the coordinates in Degrees Minutes and Seconds format
         if let geoCode = dataModel.geocodeData {
+            
             let (latDMS, lonDMS) = convertToDMS(latitude: geoCode.first!.lat, longitude: geoCode.first!.lon)
             let coords = "\(latDMS), \(lonDMS)"
             
@@ -109,7 +127,7 @@ import Foundation
         if let weather = dataModel.weatherData {
             
             return WeatherInfo(temperature: "\(Int(weather.main.temp))º",
-                               tempLowHigh: "(L:\(Int(weather.main.tempMin))ºH:\(Int(weather.main.tempMax)))",
+                               tempLowHigh: "(L:\(Int(weather.main.tempMin))º H:\(Int(weather.main.tempMax))º)",
                                tempFeels: "Feels \(Int(weather.main.feelsLike))º",
                                cloudCoverage: "\(Int(weather.main.temp))% coverage",
                                windSpeedDirection: "\(Int(weather.wind.speed))km/hr, dir: \(weather.wind.deg)º",
@@ -146,24 +164,53 @@ import Foundation
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "E"
         
+        let hourFormatter = DateFormatter()
+        hourFormatter.dateFormat = "HH"
+        
         var uniqueDTs: Set<String> = Set()
         
         if let forecastData = dataModel.weatherForecastData {
            
             forecastList = []
+//            let urlString = "https://openweathermap.org/img/wn/10d@2x.png"
             
-            for weatherData in forecastData.list {
+            var count = 0
+            let forecastDataList = forecastData.list
+            
+            while count < forecastDataList.count {
+                var weatherData = forecastDataList[count]
+                var lowTemp = 0
+                var highTemp = 0
+                var hourIconUrlss : [HourIconUrl] = []
                 let date = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
+                uniqueDTs.insert(date)
                 
-                if uniqueDTs.count < 6 && !uniqueDTs.contains(date) {
-                    forecastList?.append(WeatherForecastInfo(dayOfWeek: uniqueDTs.count == 0 ? "Today" : date,
-                                                            tempLowHigh: "(L: \(Int(weatherData.main.tempMin))º H: \(Int(weatherData.main.tempMax))º)"))
-                    uniqueDTs.insert(date)
+                var hour = hourFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
+                lowTemp += Int(weatherData.main.tempMin)
+                highTemp += Int(weatherData.main.tempMax)
+                hourIconUrlss.append(HourIconUrl(hour: "\(Int(hour) ?? 0)H", url: URL(string: "https://openweathermap.org/img/wn/\(weatherData.weather[0].icon)@2x.png")!))
+                
+                count += 1
+                
+                for j in count..<(count+7) {
+                    if j == forecastDataList.count {
+                        break
+                    }
+                    weatherData = forecastDataList[j]
+                    hour = hourFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
+                    lowTemp += Int(weatherData.main.tempMin)
+                    highTemp += Int(weatherData.main.tempMax)
+                    hourIconUrlss.append(HourIconUrl(hour: "\(Int(hour) ?? 0)H", url: URL(string: "https://openweathermap.org/img/wn/\(weatherData.weather[0].icon)@2x.png")!))
+                }
+                count += 7
+                
+                if count == forecastDataList.count {
+                    break
                 }
                 
-                if uniqueDTs.count >= 6 {
-                    break;
-                }
+                forecastList?.append(WeatherForecastInfo(dayOfWeek: uniqueDTs.count == 1 ? "Today" : date,
+                                                         tempLowHigh: "(L: \(Int(lowTemp / hourIconUrlss.count))º H: \(Int(highTemp / hourIconUrlss.count))º)",
+                                                        hourIconUrls: hourIconUrlss))
             }
         }
         
@@ -195,6 +242,18 @@ import Foundation
         
         return forecastList
     }
+    
+//    func getMapInfo() -> MapInfo? {
+//        var map: MapInfo? = nil
+//        
+//        if let geoCode = dataModel.geocodeData {
+//            map?.latitude = geoCode.first!.lat
+//            map?.longitude = geoCode.first!.lon
+//            map?.location = CLLocationCoordinate2D(latitude: geoCode.first!.lat, longitude: geoCode.first!.lon)
+//        }
+//        
+//        return map
+//    }
     
 }
 

@@ -12,7 +12,7 @@ struct MetUCDApp: App {
     let viewModel = WeatherViewModel()
     var body: some Scene {
         WindowGroup {
-            WeatherView(viewModel: viewModel)
+            WeatherAppView(viewModel: viewModel)
         }
     }
 }
