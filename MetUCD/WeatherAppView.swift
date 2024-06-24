@@ -15,93 +15,106 @@ struct WeatherAppView: View {
     
     @Bindable var viewModel: WeatherViewModel
     
+    var position: MapCameraPosition = .automatic
     @State var showWeatherPopup = false
-    @State var showWeatherPopover = false
+    @State var showWeatherFull = false
     @State var userCurrentLocation = true
-    @State var showAlert = false
-    
-    // MARK: - Map related things
-    @State var locationManager = CLLocationManager()
-    @State var camera: MapCameraPosition = .automatic
-    let defaultLocation = CLLocationCoordinate2D(latitude: 53.3498006, longitude: -6.2602964)
+    @State var region = MKCoordinateRegion()
+    @State var mapCameraPosition = MapCameraPosition.automatic
     
     var body: some View {
-        
         ZStack {
-            Map(interactionModes: .pan) {
-                Marker("", systemImage: "location.viewfinder",
-                       coordinate: defaultLocation)
-            }.ignoresSafeArea()
-            .safeAreaInset(edge: .top){
-                HStack {
-                    Spacer()
-                    Button(action: {userCurrentLocation = true}, label: {
-                        Image(systemName: "location.circle")
-                            .font(Font.system(size: 40, design: .default))
-                    })
-                    Spacer()
-                    Section {
-                        TextField("Enter location e.g Dublin, IE ", text: $viewModel.location, onEditingChanged:{ _ in showWeatherPopup = false})
-                            .onSubmit {
-                                userCurrentLocation = false
-                                do {
-                                    try viewModel.fetchData()
-                                } catch WeatherError.noGeoData{
-                                    showAlert = true
-                                } catch {
-                                    print("Something went wrong")
-                                }
-                                showWeatherPopup = true
-                            }.disableAutocorrection(true)
-                            .background{
-                                Color(.gray).opacity(0.2)
-                            }
-                            .font(Font.system(size: 25, design: .default))
-                            .cornerRadius(5.0)
-                            .frame(height: 50)
-                            .alert(isPresented: $showAlert){
-                              Alert(title: Text("Can't show location details, please try again"))
-                            }
-                        }
-                    Spacer()
+            MapReader { reader in
+                Map(position: $mapCameraPosition) {
+                    if let userLocationCoord = viewModel.locationManager.location?.coordinate {
+                        Marker("", systemImage: "location.viewfinder",
+                               coordinate: userLocationCoord)
+                    }
+                    
+                    if let enteredLocationCoord = viewModel.mapInfo, let weather = viewModel.weatherInfo {
+                        Marker("\(weather.temperature)", coordinate: CLLocationCoordinate2D(latitude: enteredLocationCoord.latitude, longitude: enteredLocationCoord.longitude))
+                    }
+                    
                 }
-            }.overlay(content: {
-                if showWeatherPopup {
-                    if let data = viewModel.weatherInfo {
-                        weatherPreview(model: data, location: viewModel.location).onTapGesture(perform: {
-                            showWeatherPopover = true
+                .ignoresSafeArea()
+                .onAppear{
+                    viewModel.locationManager.requestWhenInUseAuthorization()
+                    viewModel.fetchData()
+                }
+                // Get the map location when the map is pressed
+                .onTapGesture(perform: { screenCoord in
+                    let pinLocation = reader.convert(screenCoord, from: .local)
+                    viewModel.mapInfo?.latitude = pinLocation!.latitude
+                    viewModel.mapInfo?.longitude = pinLocation!.longitude
+                    viewModel.fetchData()
+                    if let region = viewModel.region {
+                        mapCameraPosition = MapCameraPosition.region(region)
+                    }
+                    
+                    showWeatherPopup = true
+                })
+                .safeAreaInset(edge: .top){
+                    HStack {
+                        Spacer()
+                        Button(action: {userCurrentLocation = true}, label: {
+                            Image(systemName: "location.circle")
+                                .font(Font.system(size: 40, design: .default))
                         })
+                        Spacer()
+                        Section {
+                            TextField("Enter location e.g Dublin, IE ", text: $viewModel.location, onEditingChanged:{ _ in showWeatherPopup = false})
+                                .onSubmit {
+                                    userCurrentLocation = false
+                                    viewModel.fetchData()
+                                    showWeatherPopup = true
+                                }.disableAutocorrection(true)
+                                .background{
+                                    Color(.gray).opacity(0.2)
+                                }
+                                .font(Font.system(size: 25, design: .default))
+                                .cornerRadius(5.0)
+                                .frame(height: 50)
+                            }
+                        Spacer()
                     }
-                }
-            })
-            .sheet(isPresented: $showWeatherPopover) {
-                NavigationView {
-                    Form {
-                        if let data = viewModel.geoInfo {
-                            GeoSection(model: data)
-                        }
-                        
+                }.overlay(content: {
+                    if showWeatherPopup {
                         if let data = viewModel.weatherInfo {
-                            WeatherSection(model: data)
+                            weatherPreview(model: data, location: viewModel.location).onTapGesture(perform: {
+                                showWeatherFull = true
+                            })
                         }
-                        
-                        if let data = viewModel.pollutionInfo {
-                            PollutionSection(model: data)
-                        }
-                        
-                        if let data = viewModel.weatherForecastListInfo {
-                            WeatherForecastSection(model: data)
-                        }
-                        
-                        if let data = viewModel.pollutionForecastListInfo {
-                            PollutionForecastSection(model: data)
-                        }
-                        
                     }
+                })
+                .sheet(isPresented: $showWeatherFull) {
+                    NavigationView {
+                        Form {
+                            if let data = viewModel.geoInfo {
+                                GeoSection(model: data)
+                            }
+                            
+                            if let data = viewModel.weatherInfo {
+                                WeatherSection(model: data)
+                            }
+                            
+                            if let data = viewModel.pollutionInfo {
+                                PollutionSection(model: data)
+                            }
+                            
+                            if let data = viewModel.weatherForecastListInfo {
+                                WeatherForecastSection(model: data)
+                            }
+                            
+                            if let data = viewModel.pollutionForecastListInfo {
+                                PollutionForecastSection(model: data)
+                            }
+                        }
+                    }
+                }.onMapCameraChange {
+                    showWeatherPopup = false
                 }
             }
         }
-       
     }
     
     struct GeoSection : View {
@@ -192,8 +205,13 @@ struct WeatherAppView: View {
                         HStack(spacing:30) {
                             ForEach(0..<2, id: \.self) { columnIndex in
                                 if let item = model.items.enumerated().first(where: {$0.offset == rowIndex * 2 + columnIndex} ) {
-                                    Text("\(item.element.key): \(String(format: "%.2f", item.element.value))")
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    HStack(spacing: 0) {
+                                        Spacer()
+                                        Text("\(item.element.key):")
+                                            .foregroundStyle(.blue)
+                                        Text("\(String(format: "%.2f", item.element.value))")
+                                        Spacer()
+                                    }.frame(maxWidth: .infinity, alignment: .leading)
                                 } else {
                                     Spacer()
                                 }
@@ -225,10 +243,15 @@ struct WeatherAppView: View {
                             ForEach(forecast.hourIconUrls, id: \.self) { hourIconUrl in
                                 VStack(spacing: 0){
                                     Text("\(hourIconUrl.hour)")
-                                    WebImage(url: URL(string: "\(hourIconUrl.url)")).resizable()
+                                    WebImage(url: hourIconUrl.url)
+                                        .resizable()
+                                        .placeholder{
+                                            Image(systemName: "hourglass")
+                                        }
                                         .background(Color(.gray).opacity(0.7),
                                                     in: RoundedRectangle(cornerRadius: 10))
                                         .aspectRatio(contentMode: .fit)
+                                        
                                 }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
                             }
                         }
@@ -260,6 +283,14 @@ struct WeatherAppView: View {
         }
     }
     
+    func convertTapToCoordinate(viewPoint: CGSize) -> CLLocationCoordinate2D {
+        let map = MKMapView()
+        let point = CGPoint(x: viewPoint.width / 2, y: viewPoint.height / 2) // Center point for example
+        let coordinate = map.convert(point, toCoordinateFrom: map)
+        
+        return coordinate
+    }
+
 }
 
 struct weatherPreview: View {
@@ -296,84 +327,23 @@ struct weatherPreview: View {
     }
 }
 
-struct forecastPreview: View {
+struct mapPreview: View {
     var body: some View {
-        Section(header: Text("5 day forecast")) {
-            VStack(spacing: 0){
-                HStack {
-                    Text("Mon")
-                        .foregroundStyle(.blue)
-                        .frame(width: 40)
-                    Spacer().frame(width: 150)
-                    HStack {
-                        Image(systemName: "thermometer.medium").opacity(0.5)
-                        Text("L: 24º H: 33º").opacity(0.5)
-                    }
-                }
-                HStack{
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                    VStack(spacing: 0){
-                        Text("1H")
-                        WebImage(url: URL(string: "https://openweathermap.org/img/wn/10d@2x.png")).resizable()
-                            .background(Color(.gray).opacity(0.7),
-                                        in: RoundedRectangle(cornerRadius: 10))
-                            .aspectRatio(contentMode: .fit)
-                    }.frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
-                }.padding()
+        ZStack {
+            MapReader { reader in
+                Map()
+                .onTapGesture(perform: { screenCoord in
+                    let pinLocation = reader.convert(screenCoord, from: .local)
+                    print(pinLocation!)
+                })
             }
         }
+        
     }
 }
 
+
 #Preview {
-//    forecastPreview()
+//    mapPreview()
     WeatherAppView(viewModel: WeatherViewModel())
 }

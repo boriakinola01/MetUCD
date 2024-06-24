@@ -19,6 +19,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		91A9232F2B12811B00A3BCF4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		91A923302B136D8700A3BCF4 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		91AC2E9D2AF9500100C5A36E /* MetUCD.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetUCD.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		91AC2EA02AF9500100C5A36E /* MetUCDApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetUCDApp.swift; sourceTree = "<group>"; };
 		91AC2EA22AF9500100C5A36E /* WeatherAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherAppView.swift; sourceTree = "<group>"; };
@@ -45,6 +47,7 @@
 		91AC2E942AF9500000C5A36E = {
 			isa = PBXGroup;
 			children = (
+				91A923302B136D8700A3BCF4 /* README.md */,
 				91AC2E9F2AF9500100C5A36E /* MetUCD */,
 				91AC2E9E2AF9500100C5A36E /* Products */,
 			);
@@ -61,6 +64,7 @@
 		91AC2E9F2AF9500100C5A36E /* MetUCD */ = {
 			isa = PBXGroup;
 			children = (
+				91A9232F2B12811B00A3BCF4 /* Info.plist */,
 				91AC2EA02AF9500100C5A36E /* MetUCDApp.swift */,
 				91DA9C0E2B0B902000B5AC0B /* WeatherViewModel.swift */,
 				91AC2EA22AF9500100C5A36E /* WeatherAppView.swift */,
@@ -298,6 +302,8 @@
 				DEVELOPMENT_TEAM = 5M85C8QX87;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MetUCD/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show weather";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -328,6 +334,8 @@
 				DEVELOPMENT_TEAM = 5M85C8QX87;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MetUCD/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs your location to show weather";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

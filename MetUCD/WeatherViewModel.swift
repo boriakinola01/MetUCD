@@ -6,9 +6,21 @@
 //
 
 import Foundation
+import CoreLocation
+import MapKit
 
-@Observable class WeatherViewModel {
+@Observable class WeatherViewModel : NSObject, CLLocationManagerDelegate {
     var location: String = ""
+    var locationManager = CLLocationManager()
+    
+    
+    override init() {
+        super.init()
+        
+        self.locationManager.delegate = self
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyThreeKilometers
+        self.setup()
+    }
     
     // MARK: data model
     private var dataModel = WeatherDataModel()
@@ -20,15 +32,32 @@ import Foundation
         5: "Very Poor"
     ]
     
-    func fetchData() throws {
-        Task {
-            do {
-                try await dataModel.fetch(for: location)
-            } catch {
-                throw WeatherError.noGeoData
+    func fetchData() {
+        if !location.isEmpty {
+            Task {
+                await dataModel.fetch(for: location,
+                                      longitude: mapInfo!.longitude,
+                                      latitude: mapInfo!.latitude)
             }
-            
+        } else {
+            if let location = locationManager.location {
+                Task {
+                    await dataModel.fetch(for: "",
+                                          longitude: location.coordinate.longitude,
+                                          latitude: location.coordinate.latitude)
+                }
+            }
         }
+    }
+    
+    var mapInfo: MapInfo? {
+        get {return getMapInfo()}
+        set {}
+    }
+    
+    var region: MKCoordinateRegion? {
+        get {return getRegion()}
+        set {}
     }
     
     var geoInfo: GeoInfo? {
@@ -86,6 +115,11 @@ import Foundation
         var index: String
     }
     
+    struct MapInfo {
+        var longitude: Double
+        var latitude: Double
+    }
+    
     typealias WeatherForecastList = [WeatherForecastInfo]
     
     typealias PollutionForecastList = [PollutionForecastInfo]
@@ -94,12 +128,6 @@ import Foundation
         var hour: String
         var url : URL
     }
-    
-//    struct MapInfo {
-//        var longitude: Double
-//        var latitude: Double
-//        var location: CLLocationCoordinate2D
-//    }
     
     private func getGeoInfo() -> GeoInfo? {
         // Get the coordinates in Degrees Minutes and Seconds format
@@ -161,6 +189,7 @@ import Foundation
     func getWeatherForecastListInfo() -> WeatherForecastList? {
         var forecastList: WeatherForecastList? = nil
         
+        // two formatters, one for the day and another for the hour of the day
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "E"
         
@@ -171,27 +200,41 @@ import Foundation
         
         if let forecastData = dataModel.weatherForecastData {
            
+            // initialise and empty list
             forecastList = []
-//            let urlString = "https://openweathermap.org/img/wn/10d@2x.png"
             
             var count = 0
+            // get the list present in the model
             let forecastDataList = forecastData.list
             
+            // loop through all the elements in the list
             while count < forecastDataList.count {
+                // get the first weatherForecast data object
                 var weatherData = forecastDataList[count]
                 var lowTemp = 0
                 var highTemp = 0
+                // For that day, initialise an empty HourIconUrl array
                 var hourIconUrlss : [HourIconUrl] = []
+                // get the first day
                 let date = dateFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
                 uniqueDTs.insert(date)
-                
+                // get the hour of that day
                 var hour = hourFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(weatherData.dt)))
+                
+                // keep track of low and high temperatures
                 lowTemp += Int(weatherData.main.tempMin)
                 highTemp += Int(weatherData.main.tempMax)
+                // add the initial hour to the array
                 hourIconUrlss.append(HourIconUrl(hour: "\(Int(hour) ?? 0)H", url: URL(string: "https://openweathermap.org/img/wn/\(weatherData.weather[0].icon)@2x.png")!))
                 
+                // increment the counter
                 count += 1
                 
+                // Loop until the 8th item(7th index) in the array and
+                // do as above
+                // This is to get all the forecast data for the 8 hours for
+                // each day that we have in the forecast data returned from the
+                // api
                 for j in count..<(count+7) {
                     if j == forecastDataList.count {
                         break
@@ -202,12 +245,16 @@ import Foundation
                     highTemp += Int(weatherData.main.tempMax)
                     hourIconUrlss.append(HourIconUrl(hour: "\(Int(hour) ?? 0)H", url: URL(string: "https://openweathermap.org/img/wn/\(weatherData.weather[0].icon)@2x.png")!))
                 }
+                // increment count by 7
                 count += 7
                 
                 if count == forecastDataList.count {
                     break
                 }
                 
+                // append a WeatherForecastInfo with the day of the week,
+                // and avergae low and high temperature
+                // the list of hourIconUrls
                 forecastList?.append(WeatherForecastInfo(dayOfWeek: uniqueDTs.count == 1 ? "Today" : date,
                                                          tempLowHigh: "(L: \(Int(lowTemp / hourIconUrlss.count))º H: \(Int(highTemp / hourIconUrlss.count))º)",
                                                         hourIconUrls: hourIconUrlss))
@@ -243,18 +290,57 @@ import Foundation
         return forecastList
     }
     
-//    func getMapInfo() -> MapInfo? {
-//        var map: MapInfo? = nil
-//        
-//        if let geoCode = dataModel.geocodeData {
-//            map?.latitude = geoCode.first!.lat
-//            map?.longitude = geoCode.first!.lon
-//            map?.location = CLLocationCoordinate2D(latitude: geoCode.first!.lat, longitude: geoCode.first!.lon)
-//        }
-//        
-//        return map
-//    }
+    func getMapInfo() -> MapInfo? {
+        var map = MapInfo(longitude: 0.0, latitude: 0.0)
+        
+        if let geoCode = dataModel.geocodeData {
+            map.latitude = geoCode.first!.lat
+            map.longitude = geoCode.first!.lon
+        }
+        
+        return map
+    }
     
+    func getRegion() -> MKCoordinateRegion? {
+        var region: MKCoordinateRegion? = nil
+        
+        if let geoCode = dataModel.geocodeData {
+            region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: geoCode.first!.lat, longitude: geoCode.first!.lon), latitudinalMeters: 5, longitudinalMeters: 5)
+        }
+        
+        return region
+    }
+    
+    private func setup() {
+        switch locationManager.authorizationStatus {
+        case .authorizedWhenInUse:
+            locationManager.requestLocation()
+        case .notDetermined:
+            locationManager.startUpdatingLocation()
+            locationManager.requestWhenInUseAuthorization()
+        default:
+            break
+        }
+    }
+    
+}
+
+extension WeatherViewModel {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        locations.last.map {
+            region = MKCoordinateRegion(center: $0.coordinate,
+                                        span: .init(latitudeDelta: 1, longitudeDelta: 1))
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Something went wrong: \(error)")
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        guard .authorizedWhenInUse == manager.authorizationStatus else { return }
+        locationManager.requestLocation()
+    }
 }
 
 // MARK: - Misc

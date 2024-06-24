@@ -26,15 +26,15 @@ struct WeatherDataModel {
         location = nil
     }
     
-    mutating func fetch(for locationName: String) async throws {
+    mutating func fetch(for locationName: String, longitude: Double, latitude: Double) async {
         clear()
-        self.geocodeData = await OpenWeatherMapAPI.getGeocodeData(locationName: locationName)
-        if self.geocodeData?[0]==nil {
-            throw WeatherError.noGeoData
+        if locationName.isEmpty {
+            self.geocodeData = await OpenWeatherMapAPI.getGeocodeData(long: longitude, lat: latitude)
+        } else {
+            self.geocodeData = await OpenWeatherMapAPI.getGeocodeData(locationName: locationName)
         }
+        
         self.location = geocodeData?[0]
-        
-        
         
         if let location = location {
             let lon = location.lon
@@ -49,7 +49,7 @@ struct WeatherDataModel {
 }
     
 struct OpenWeatherMapAPI {
-    static private let apiKey: String = "a217d4b7c0bd4440dd30d808358561fb"
+    static private let apiKey: String = ""
     static private let base: String = "https://api.openweathermap.org"
     
     // MARK: - Fetch function
@@ -79,6 +79,11 @@ struct OpenWeatherMapAPI {
     
     static func getGeocodeData(locationName: String) async -> GeocodeData? {
         let subString: String = "/geo/1.0/direct?q=\(locationName)&limit=1"
+        return try? await Self.fetch(subURLString: subString, model: GeocodeData.self)
+    }
+    
+    static func getGeocodeData(long: Double, lat: Double) async -> GeocodeData? {
+        let subString: String = "/geo/1.0/reverse?lat=\(lat)&lon=\(long)&limit=1"
         return try? await Self.fetch(subURLString: subString, model: GeocodeData.self)
     }
     
@@ -212,6 +217,3 @@ struct WeatherForecastData: Codable {
 // MARK: - Pollution forecast data
 typealias PollutionForecastData = PollutionData
 
-enum WeatherError: Error {
-    case noGeoData
-}
